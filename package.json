@@ -1,23 +1,21 @@
 {
-	"name": "@orkestrel/markdown",
+	"name": "@orkestrel/timeout",
 	"version": "0.0.1",
-	"description": "Markdown parser toolkit — a fast, zero-surprise CommonMark-style parser with GFM tables, a typed AST, contract-backed node guards, and safe HTML rendering. Part of the @orkestrel line.",
+	"description": "A typed, controllable setTimeout wrapper — an AbortSignal deadline with start/clear lifecycle and parent-signal linking. Part of the @orkestrel line.",
 	"keywords": [
-		"ast",
-		"commonmark",
-		"gfm",
-		"html",
-		"markdown",
-		"markdown-parser",
-		"parser",
+		"abort-signal",
+		"cancellation",
+		"deadline",
+		"timeout",
+		"timer",
 		"typescript"
 	],
-	"homepage": "https://github.com/orkestrel/markdown#readme",
-	"bugs": "https://github.com/orkestrel/markdown/issues",
+	"homepage": "https://github.com/orkestrel/timeout#readme",
+	"bugs": "https://github.com/orkestrel/timeout/issues",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/orkestrel/markdown.git"
+		"url": "git+https://github.com/orkestrel/timeout.git"
 	},
 	"files": [
 		"dist",

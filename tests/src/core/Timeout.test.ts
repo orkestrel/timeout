@@ -1,5 +1,6 @@
+import type { TimeoutInterface, TimeoutOptions } from '@src/core'
 import { Timeout } from '@src/core'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { createRecorder, waitForDelay } from '../../setup.js'
 
 // Timeout — a controllable setTimeout wrapper exposing a deadline AbortSignal.
@@ -224,6 +225,43 @@ describe('Timeout', () => {
 		const other = new Timeout({ ms: MS })
 
 		expect(timeout.id).not.toBe(other.id)
+	})
+
+	it('ms: -1 is clamped by the host to ~0 and expires on a near-immediate macrotask', async () => {
+		const timeout = new Timeout({ ms: -1 })
+
+		timeout.start()
+		expect(timeout.expired).toBe(false)
+
+		await waitForDelay(MS)
+
+		expect(timeout.expired).toBe(true)
+		expect(timeout.signal.aborted).toBe(true)
+	})
+
+	it('ms: NaN is clamped by the host to ~0 and expires on a near-immediate macrotask', async () => {
+		const timeout = new Timeout({ ms: Number.NaN })
+
+		timeout.start()
+		expect(timeout.expired).toBe(false)
+
+		await waitForDelay(MS)
+
+		expect(timeout.expired).toBe(true)
+		expect(timeout.signal.aborted).toBe(true)
+	})
+
+	it('id: undefined generates a non-empty string id', () => {
+		const timeout = new Timeout({ ms: MS, id: undefined })
+
+		expect(typeof timeout.id).toBe('string')
+		expect(timeout.id.length > 0).toBe(true)
+	})
+
+	it('id: an empty string is preserved as-is (not replaced with a generated id)', () => {
+		const timeout = new Timeout({ ms: MS, id: '' })
+
+		expect(timeout.id).toBe('')
 	})
 })
 
@@ -483,6 +521,26 @@ describe('Timeout — determinism & leak-safety (fake timers)', () => {
 		timeout.start()
 		expect(timeout.signal).not.toBe(initial)
 		expect(timeout.signal.aborted).toBe(false)
+	})
+})
+
+// Type-level shape (positive assertions only) — TimeoutInterface's member shape
+// and TimeoutOptions' input shape stay locked as documented.
+
+describe('Timeout — type shape', () => {
+	it('TimeoutInterface exposes readonly id/ms/signal/expired and start/clear methods', () => {
+		expectTypeOf<TimeoutInterface>().toHaveProperty('id').toEqualTypeOf<string>()
+		expectTypeOf<TimeoutInterface>().toHaveProperty('ms').toEqualTypeOf<number>()
+		expectTypeOf<TimeoutInterface>().toHaveProperty('signal').toEqualTypeOf<AbortSignal>()
+		expectTypeOf<TimeoutInterface>().toHaveProperty('expired').toEqualTypeOf<boolean>()
+		expectTypeOf<TimeoutInterface['start']>().toEqualTypeOf<() => void>()
+		expectTypeOf<TimeoutInterface['clear']>().toEqualTypeOf<() => void>()
+	})
+
+	it('TimeoutOptions accepts an optional id, a required ms, and an optional signal', () => {
+		expectTypeOf<TimeoutOptions>().toHaveProperty('id').toEqualTypeOf<string | undefined>()
+		expectTypeOf<TimeoutOptions>().toHaveProperty('ms').toEqualTypeOf<number>()
+		expectTypeOf<TimeoutOptions>().toHaveProperty('signal').toEqualTypeOf<AbortSignal | undefined>()
 	})
 
 	it('expired stays consistent with signal.aborted through a full transition journey', () => {

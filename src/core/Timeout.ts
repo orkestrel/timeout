@@ -1,4 +1,5 @@
 import type { TimeoutInterface, TimeoutOptions } from './types.js'
+import { isString } from '@orkestrel/contract'
 
 /**
  * A deadline handle — a controllable `setTimeout` wrapper that exposes an
@@ -39,7 +40,9 @@ export class Timeout implements TimeoutInterface {
 	#expired = false
 
 	constructor(options: TimeoutOptions) {
-		this.id = options.id ?? crypto.randomUUID()
+		// Construction is the defensive JS boundary — validate here so the
+		// start()/clear() hot paths stay dependency-free.
+		this.id = isString(options.id) ? options.id : crypto.randomUUID()
 		this.ms = options.ms
 		this.#parent = options.signal
 	}

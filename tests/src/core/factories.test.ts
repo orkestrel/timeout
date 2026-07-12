@@ -1,6 +1,7 @@
+import type { TimeoutInterface } from '@src/core'
 import { createTimeout } from '@src/core'
-import { describe, expect, it } from 'vitest'
-import { createRecorder, waitForDelay } from '../../../setup.js'
+import { describe, expect, expectTypeOf, it } from 'vitest'
+import { createRecorder, waitForDelay } from '../../setup.js'
 
 // The timeout factory — that `createTimeout` returns a working TimeoutInterface.
 // Full behavior (clear, re-start, parent clearing) lives in Timeout.test.ts; here
@@ -29,5 +30,9 @@ describe('createTimeout', () => {
 		const timeout = createTimeout({ id: 'deadline-9', ms: MS })
 
 		expect(timeout.id).toBe('deadline-9')
+	})
+
+	it('createTimeout returns a TimeoutInterface', () => {
+		expectTypeOf(createTimeout({ ms: MS })).toEqualTypeOf<TimeoutInterface>()
 	})
 })
