@@ -1,6 +1,6 @@
 {
 	"name": "@orkestrel/timeout",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "A typed, controllable setTimeout wrapper — an AbortSignal deadline with start/clear lifecycle and parent-signal linking. Part of the @orkestrel line.",
 	"keywords": [
 		"abort-signal",
@@ -63,11 +63,11 @@
 		"prepublishOnly": "npm run format:check && npm run lint:check && npm run check && npm run build && npm test"
 	},
 	"dependencies": {
-		"@orkestrel/contract": "^0.0.2"
+		"@orkestrel/contract": "^0.0.5"
 	},
 	"devDependencies": {
 		"@microsoft/api-extractor": "^7.58.11",
-		"@orkestrel/guide": "^0.0.2",
+		"@orkestrel/guide": "^0.0.5",
 		"@types/node": "^26.1.1",
 		"oxfmt": "^0.59.0",
 		"oxlint": "^1.74.0",
