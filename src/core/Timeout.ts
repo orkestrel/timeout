@@ -34,9 +34,10 @@ export class Timeout implements TimeoutInterface {
 	readonly id: string
 	readonly ms: number
 	readonly #parent: AbortSignal | undefined
+	readonly #listener: () => void
 	#controller = new AbortController()
 	#handle: ReturnType<typeof setTimeout> | undefined
-	#listener: (() => void) | undefined
+	#linked = false
 	#expired = false
 
 	constructor(options: TimeoutOptions) {
@@ -45,6 +46,7 @@ export class Timeout implements TimeoutInterface {
 		this.id = isString(options.id) ? options.id : crypto.randomUUID()
 		this.ms = options.ms
 		this.#parent = options.signal
+		this.#listener = this.clear.bind(this)
 	}
 
 	get signal(): AbortSignal {
@@ -71,9 +73,10 @@ export class Timeout implements TimeoutInterface {
 		if (this.#controller.signal.aborted) this.#controller = new AbortController()
 		// Link the parent only for the lifetime of this timer — a parent abort CLEARS
 		// the timeout (so it never expires); the listener is removed when the timer settles.
-		const listener = (): void => this.clear()
-		this.#listener = listener
-		this.#parent?.addEventListener('abort', listener, { once: true })
+		if (this.#parent !== undefined) {
+			this.#parent.addEventListener('abort', this.#listener, { once: true })
+			this.#linked = true
+		}
 		this.#handle = setTimeout(() => {
 			this.#handle = undefined
 			this.#expired = true
@@ -98,9 +101,9 @@ export class Timeout implements TimeoutInterface {
 
 	// Remove the parent-abort listener if one is currently attached.
 	#detach(): void {
-		if (this.#listener !== undefined) {
+		if (this.#linked) {
 			this.#parent?.removeEventListener('abort', this.#listener)
-			this.#listener = undefined
+			this.#linked = false
 		}
 	}
 }

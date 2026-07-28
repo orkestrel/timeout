@@ -251,8 +251,8 @@ describe('Timeout', () => {
 		expect(timeout.signal.aborted).toBe(true)
 	})
 
-	it('id: undefined generates a non-empty string id', () => {
-		const timeout = new Timeout({ ms: MS, id: undefined })
+	it('an omitted id generates a non-empty string id', () => {
+		const timeout = new Timeout({ ms: MS })
 
 		expect(typeof timeout.id).toBe('string')
 		expect(timeout.id.length > 0).toBe(true)
