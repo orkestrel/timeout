@@ -39,15 +39,24 @@ timeout.clear() // work finished first — cancel the deadline
 ```
 
 `createTimeout(options)` (or `new Timeout(options)`) returns a
-`TimeoutInterface`. `options.ms` is the deadline in milliseconds (a
-non-negative finite number — the host `setTimeout` clamps a negative, `NaN`,
-or over-2^31-1 value rather than throwing); an optional `options.id` labels the
-handle for tracing (defaults to a random UUID); an optional `options.signal`
-links a parent `AbortSignal` whose abort clears the timeout while a timer is
-armed. `start()` arms the deadline: on expiry `expired` flips `true` and
-`signal` fires. `clear()` cancels a pending expiry without firing `signal` and
-resets `expired` back to `false`. The handle is a pure functional primitive —
-no `Emitter`, no events.
+`TimeoutInterface`. `options.ms` must be an integer from `0` through
+`MAX_TIMEOUT_MS` (`2_147_483_647`), inclusive; invalid values throw a coded
+`ContractError` before any timer lifecycle begins. Zero is intentionally a
+next-turn deadline. An optional string `options.id` labels the handle for
+tracing and defaults to a random UUID. An optional `options.signal` must be a
+genuine native `AbortSignal`; its abort clears an armed timeout without
+expiring it, aborting the timeout's own signal, or forwarding its reason.
+`start()` arms or replaces the deadline. On expiry `expired` flips `true` and
+the native `signal` aborts once. `clear()` cancels without aborting, resets
+`expired`, and remains safe to call while idle. `isTimeoutDuration` and
+`isTimeoutSignal` provide total validators for dynamic inputs.
+
+Malformed or unreadable options throw with contract code `bound`. Invalid
+defined `id`, `ms`, and `signal` values use `literal`, `range`, and `placement`,
+respectively, with safe path, limit, and received-value context. `expired`
+derives directly from the owned signal's `aborted` state.
+`validateTimeoutOptions` exposes the same strict construction boundary as a
+once-read helper that returns a fresh copy without absent optional keys.
 
 ## Guide
 

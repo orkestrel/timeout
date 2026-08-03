@@ -1,33 +1,29 @@
 import type { TimeoutInterface, TimeoutOptions } from './types.js'
-import { isString } from '@orkestrel/contract'
+import { validateTimeoutOptions } from './helpers.js'
 
 /**
- * A deadline handle — a controllable `setTimeout` wrapper that exposes an
- * `AbortSignal` which fires when the timeout expires, for racing against work.
+ * A controllable deadline whose native `AbortSignal` aborts when it expires.
  *
  * @remarks
- * - **Deadline signal.** `start()` arms a `setTimeout` for `ms`; on expiry it
- *   flips `expired` and aborts the controller, firing `signal`. Race `signal`
- *   against work to bound how long it may run.
- * - **Controllable.** `clear()` cancels a pending expiry WITHOUT firing `signal`,
- *   and resets `expired` back to `false` (the §10 reset) — a cleared timeout
- *   reports `expired === false` and a non-aborted `signal`.
- * - **Reusable.** Re-`start()` after an expiry swaps in a fresh controller and
- *   resets `expired`, so `signal` / `expired` reflect the new run — the handle is
- *   reusable across deadlines without re-construction.
- * - **Parent linking.** A parent `signal` does NOT expire this timeout — it
- *   CLEARS it: the parent listener is attached only while a timer is armed (added
- *   on `start()`, removed on expiry or `clear()`), so a parent abort during the
- *   timing window cancels the pending expiry and a later `start()` is a no-op once
- *   the parent has aborted. An idle handle holds no parent listener.
- * - **Event-free.** A pure functional primitive — no Emitter, no events.
+ * `start()` arms or replaces the current deadline. Expiry sets `expired` and
+ * aborts the current signal once. `clear()` cancels without aborting and resets
+ * `expired`. Starting or clearing after expiry installs a fresh signal. A parent
+ * abort deliberately clears the timeout without aborting its signal; once the
+ * parent has aborted, later starts are inert.
+ *
+ * Construction validates the complete JavaScript boundary before creating an
+ * `AbortController`. A malformed or unreadable options record throws a
+ * `bound`-coded {@link import('@orkestrel/contract').ContractError}; an invalid
+ * `id`, `ms`, or `signal` uses `literal`, `range`, or `placement`, respectively.
  *
  * @example
  * ```ts
+ * import { Timeout } from '@orkestrel/timeout'
+ *
  * const timeout = new Timeout({ ms: 5_000 })
  * timeout.start()
  * timeout.signal.addEventListener('abort', () => giveUp(), { once: true })
- * timeout.clear() // cancels the deadline before it fires
+ * timeout.clear()
  * ```
  */
 export class Timeout implements TimeoutInterface {
@@ -35,17 +31,16 @@ export class Timeout implements TimeoutInterface {
 	readonly ms: number
 	readonly #parent: AbortSignal | undefined
 	readonly #listener: () => void
-	#controller = new AbortController()
+	#controller: AbortController
 	#handle: ReturnType<typeof setTimeout> | undefined
 	#linked = false
-	#expired = false
 
 	constructor(options: TimeoutOptions) {
-		// Construction is the defensive JS boundary — validate here so the
-		// start()/clear() hot paths stay dependency-free.
-		this.id = isString(options.id) ? options.id : crypto.randomUUID()
-		this.ms = options.ms
-		this.#parent = options.signal
+		const input = validateTimeoutOptions(options)
+		this.id = input.id === undefined ? crypto.randomUUID() : input.id
+		this.ms = input.ms
+		this.#parent = input.signal
+		this.#controller = new AbortController()
 		this.#listener = this.clear.bind(this)
 	}
 
@@ -54,36 +49,25 @@ export class Timeout implements TimeoutInterface {
 	}
 
 	get expired(): boolean {
-		return this.#expired
+		return this.#controller.signal.aborted
 	}
 
 	start(): void {
-		// Once the parent has aborted, the deadline must never fire.
 		if (this.#parent?.aborted === true) return
-		// Re-arm cleanly: drop any pending timer + parent listener from a prior run.
 		if (this.#handle !== undefined) {
 			clearTimeout(this.#handle)
 			this.#handle = undefined
 		}
 		this.#detach()
-		this.#expired = false
-		// Swap in a fresh controller only when the current one has already fired, so a
-		// re-armed run gets a clean `signal` while a listener attached before the FIRST
-		// `start()` (on the construction-time signal) survives to fire on expiry.
 		if (this.#controller.signal.aborted) this.#controller = new AbortController()
-		// Link the parent only for the lifetime of this timer — a parent abort CLEARS
-		// the timeout (so it never expires); the listener is removed when the timer settles.
 		if (this.#parent !== undefined) {
 			this.#parent.addEventListener('abort', this.#listener, { once: true })
 			this.#linked = true
 		}
 		this.#handle = setTimeout(() => {
 			this.#handle = undefined
-			this.#expired = true
-			this.#controller.abort()
-			// The timer fired — drop the parent listener so a later parent abort can no
-			// longer reach `clear()` and un-expire this legitimate expiry.
 			this.#detach()
+			this.#controller.abort()
 		}, this.ms)
 	}
 
@@ -93,13 +77,9 @@ export class Timeout implements TimeoutInterface {
 			this.#handle = undefined
 		}
 		this.#detach()
-		this.#expired = false
-		// If the controller had already fired, swap a fresh one so a cleared timeout
-		// reports `expired === false` AND a non-aborted `signal`, consistently.
 		if (this.#controller.signal.aborted) this.#controller = new AbortController()
 	}
 
-	// Remove the parent-abort listener if one is currently attached.
 	#detach(): void {
 		if (this.#linked) {
 			this.#parent?.removeEventListener('abort', this.#listener)

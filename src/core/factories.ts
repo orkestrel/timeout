@@ -2,38 +2,31 @@ import type { TimeoutInterface, TimeoutOptions } from './types.js'
 import { Timeout } from './Timeout.js'
 
 /**
- * Create a deadline handle — a controllable `setTimeout` wrapper that exposes an
- * `AbortSignal` which fires when the timeout expires, for racing against work.
+ * Create a controllable deadline whose native signal aborts on expiry.
  *
  * @remarks
- * Call `start()` to arm the deadline for `ms` milliseconds; on expiry the handle's
- * `signal` fires and `expired` flips `true`. Call `clear()` to cancel a pending
- * deadline without firing. When `options.signal` is given, a parent abort CLEARS
- * the timeout (it never expires) rather than firing it. Pass `options.id` to label
- * the handle for tracing, or let it default to a random UUID. `ms` must be a
- * non-negative finite number; the host `setTimeout` clamps a negative or `NaN`
- * value to roughly `0` (firing on the next macrotask) rather than throwing.
+ * `options.ms` must be an integer from `0` through `2_147_483_647`, inclusive.
+ * A parent `options.signal` clears an armed timeout without aborting the
+ * timeout's own signal. Omitted `options.id` values generate a random UUID.
+ * Malformed or unreadable options use contract code `bound`; invalid `id`,
+ * `ms`, and `signal` values use `literal`, `range`, and `placement`.
  *
- * @param options - `ms` (the deadline in milliseconds, a non-negative finite
- *   number), an optional `id` (a trace label; defaults to a random UUID), and an
- *   optional parent `signal` whose abort clears the timeout
- * @returns A working {@link TimeoutInterface}
+ * @param options - Validated deadline, optional trace label, and optional native parent signal
+ * @returns A reusable timeout handle
+ * @throws {@link import('@orkestrel/contract').ContractError} When the
+ *   JavaScript input does not satisfy `TimeoutOptions`
  *
  * @example
  * ```ts
- * import { createTimeout } from '@src/core'
+ * import { createTimeout } from '@orkestrel/timeout'
  *
  * const timeout = createTimeout({ ms: 5_000 })
  * timeout.start()
- * const result = await Promise.race([
- * 	work(),
- * 	new Promise((_, reject) =>
- * 		timeout.signal.addEventListener('abort', () => reject(new Error('timed out')), {
- * 			once: true,
- * 		}),
- * 	),
- * ])
- * timeout.clear() // work finished first — cancel the deadline
+ * try {
+ * 	await fetch('/work', { signal: timeout.signal })
+ * } finally {
+ * 	timeout.clear()
+ * }
  * ```
  */
 export function createTimeout(options: TimeoutOptions): TimeoutInterface {

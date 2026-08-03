@@ -1,5 +1,6 @@
 import type { TimeoutInterface } from '@src/core'
 import { createTimeout } from '@src/core'
+import { ContractError } from '@orkestrel/contract'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createRecorder, waitForDelay } from '../../setup.js'
 
@@ -34,5 +35,9 @@ describe('createTimeout', () => {
 
 	it('createTimeout returns a TimeoutInterface', () => {
 		expectTypeOf(createTimeout({ ms: MS })).toEqualTypeOf<TimeoutInterface>()
+	})
+
+	it('preserves the constructor boundary for untyped callers', () => {
+		expect(() => Reflect.apply(createTimeout, undefined, [{ ms: 1.5 }])).toThrow(ContractError)
 	})
 })
