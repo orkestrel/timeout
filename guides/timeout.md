@@ -11,7 +11,7 @@
 > event map. `start()` arms the deadline, `clear()` cancels it without firing,
 > and re-`start()`ing after an expiry swaps in a fresh signal, so a handle is
 > reusable across deadlines without re-construction. Source:
-> [`src/core`](../../src/core). Surfaced through the `@src/core` barrel.
+> [`src/core`](../src/core). Surfaced through the `@src/core` barrel.
 
 ## Surface
 
@@ -210,27 +210,27 @@ timeout.start() // re-armed; a fresh deadline window begins
 
 ## Tests
 
-- [`tests/src/core/Timeout.test.ts`](../../tests/src/core/Timeout.test.ts) —
+- [`tests/src/core/Timeout.test.ts`](../tests/src/core/Timeout.test.ts) —
   public-constructor integration, real expiry / clear / replacement / churn
   behavior, signal identity and derived expiry, and the intentional parent-clear
   lifecycle.
-- [`tests/src/core/helpers.test.ts`](../../tests/src/core/helpers.test.ts) — fresh
+- [`tests/src/core/helpers.test.ts`](../tests/src/core/helpers.test.ts) — fresh
   normalized copies, omitted optional keys, exactly-once property reads, hostile
   getter containment, duration boundaries, and exact structured errors.
-- [`tests/src/core/validators.test.ts`](../../tests/src/core/validators.test.ts) —
+- [`tests/src/core/validators.test.ts`](../tests/src/core/validators.test.ts) —
   total duration and native-signal validation, including spoofed values and a
   revoked proxy.
-- [`tests/src/core/factories.test.ts`](../../tests/src/core/factories.test.ts) —
+- [`tests/src/core/factories.test.ts`](../tests/src/core/factories.test.ts) —
   `createTimeout` returns a working `TimeoutInterface` and preserves the strict
   construction boundary.
 
 ## See also
 
-- [`AGENTS.md`](../../AGENTS.md) — the rules; §10 lifecycle (`start` / `clear`),
+- [`AGENTS.md`](../AGENTS.md) — the rules; §10 lifecycle (`start` / `clear`),
   §8 options design, §22 documentation-as-contracts.
 - [`contract.md`](contract.md) — the mirrored guide for `@orkestrel/contract`,
   the source of the validation primitives and `ContractError` used at the
   construction boundary.
 - [`guide.md`](guide.md) — the mirrored guide for `@orkestrel/guide`, the
   devDependency powering this repo's guides-parity test suite.
-- [`README.md`](../README.md) — the guides index.
+- [`README.md`](README.md) — the guides index.
