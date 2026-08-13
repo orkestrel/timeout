@@ -2,7 +2,7 @@ import type { TimeoutInterface } from '@src/core'
 import { createTimeout } from '@src/core'
 import { ContractError } from '@orkestrel/contract'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createRecorder, waitForDelay } from '../../setup.js'
+import { createRecorder, waitForDelay } from '@orkestrel/test'
 
 // The timeout factory — that `createTimeout` returns a working TimeoutInterface.
 // Full behavior (clear, re-start, parent clearing) lives in Timeout.test.ts; here

@@ -2,7 +2,7 @@ import type { TimeoutInterface, TimeoutOptions } from '@src/core'
 import { MAX_TIMEOUT_MS, Timeout } from '@src/core'
 import { isContractError } from '@orkestrel/contract'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createRecorder, waitForDelay } from '../../setup.js'
+import { createRecorder, waitForDelay } from '@orkestrel/test'
 
 const MS = 10
 const WAIT_MS = 40
