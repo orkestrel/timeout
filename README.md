@@ -61,7 +61,7 @@ once-read helper that returns a fresh copy without absent optional keys.
 ## Guide
 
 For the full surface — the deadline lifecycle, parent-signal linking, and
-reuse semantics — see [`guides/src/timeout.md`](guides/src/timeout.md).
+reuse semantics — see [`guides/timeout.md`](guides/timeout.md).
 
 ## Package
 
