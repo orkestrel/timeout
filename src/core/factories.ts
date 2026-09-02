@@ -2,7 +2,7 @@ import type { TimeoutInterface, TimeoutOptions } from './types.js'
 import { Timeout } from './Timeout.js'
 
 /**
- * Create a controllable deadline whose native signal aborts on expiry.
+ * Creates a controllable deadline whose native signal aborts on expiry.
  *
  * @remarks
  * `options.ms` must be an integer from `0` through `2_147_483_647`, inclusive.

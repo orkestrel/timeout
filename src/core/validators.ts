@@ -2,10 +2,10 @@ import { isFiniteNumber, isInteger } from '@orkestrel/contract'
 import { MAX_TIMEOUT_MS } from './constants.js'
 
 /**
- * Determine whether a value is an accepted timeout duration.
+ * Determines whether a value is an accepted timeout duration.
  *
  * @param value - Unknown duration candidate
- * @returns `true` only for an integer in the inclusive timeout range
+ * @returns True if the value is an integer in the inclusive timeout range; false otherwise
  *
  * @example
  * ```ts
@@ -18,7 +18,7 @@ export function isTimeoutDuration(value: unknown): value is number {
 }
 
 /**
- * Determine whether a value is a genuine native `AbortSignal`.
+ * Determines whether a value is a genuine native `AbortSignal`.
  *
  * @remarks
  * The intrinsic `aborted` getter performs the native brand check. The boundary
@@ -26,7 +26,7 @@ export function isTimeoutDuration(value: unknown): value is number {
  * allowing their errors to escape.
  *
  * @param value - Unknown signal candidate
- * @returns `true` only when the native `AbortSignal` getter accepts the value
+ * @returns True if the native `AbortSignal` getter accepts the value; false otherwise
  *
  * @example
  * ```ts

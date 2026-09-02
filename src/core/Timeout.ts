@@ -2,7 +2,7 @@ import type { TimeoutInterface, TimeoutOptions } from './types.js'
 import { validateTimeoutOptions } from './helpers.js'
 
 /**
- * A controllable deadline whose native `AbortSignal` aborts when it expires.
+ * Represents a controllable deadline whose native `AbortSignal` aborts when it expires.
  *
  * @remarks
  * `start()` arms or replaces the current deadline. Expiry sets `expired` and

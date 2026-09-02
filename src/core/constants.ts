@@ -1,5 +1,5 @@
 /**
- * Largest timeout duration accepted by the package, in milliseconds.
+ * Names the largest timeout duration accepted by the package, in milliseconds.
  *
  * @example
  * ```ts

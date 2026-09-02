@@ -4,7 +4,7 @@ import { MAX_TIMEOUT_MS } from './constants.js'
 import { isTimeoutDuration, isTimeoutSignal } from './validators.js'
 
 /**
- * Validate and normalize timeout construction options.
+ * Validates and normalizes timeout construction options.
  *
  * @remarks
  * Each property is read exactly once before validation. The returned object is

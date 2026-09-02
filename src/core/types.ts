@@ -1,5 +1,5 @@
 /**
- * Options for constructing a timeout deadline.
+ * Represents the options for constructing a timeout deadline.
  *
  * @remarks
  * `ms` is an integer from `0` through `2_147_483_647`, inclusive. `id`
@@ -13,16 +13,16 @@
  * ```
  */
 export interface TimeoutOptions {
-	/** Trace label for the timeout; omission generates a random UUID. */
+	/** Holds the trace label for the timeout; omission generates a random UUID. */
 	readonly id?: string
-	/** Integer deadline in milliseconds, inclusive from `0` through `2_147_483_647`. */
+	/** Holds the integer deadline in milliseconds, inclusive from `0` through `2_147_483_647`. */
 	readonly ms: number
-	/** Native parent signal whose abort clears an armed timeout. */
+	/** Holds the native parent signal whose abort clears an armed timeout. */
 	readonly signal?: AbortSignal
 }
 
 /**
- * A controllable deadline exposing a native `AbortSignal` that aborts on expiry.
+ * Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry.
  *
  * @example
  * ```ts
@@ -32,22 +32,22 @@ export interface TimeoutOptions {
  * ```
  */
 export interface TimeoutInterface {
-	/** Trace label supplied at construction or generated as a random UUID. */
+	/** Holds the trace label supplied at construction or generated as a random UUID. */
 	readonly id: string
-	/** Validated integer deadline in milliseconds. */
+	/** Holds the validated integer deadline in milliseconds. */
 	readonly ms: number
-	/** Native signal that aborts once when the current deadline expires. */
+	/** Holds the native signal that aborts once when the current deadline expires. */
 	readonly signal: AbortSignal
-	/** Whether the owned signal has aborted, derived directly from that signal. */
+	/** Reports whether the owned signal has aborted, derived directly from that signal. */
 	readonly expired: boolean
 	/**
-	 * Arm or re-arm the deadline.
+	 * Arms or re-arms the deadline.
 	 *
 	 * @returns Nothing
 	 */
 	start(): void
 	/**
-	 * Cancel an armed deadline without aborting its signal and reset expiry state.
+	 * Cancels an armed deadline without aborting its signal and resets expiry state.
 	 *
 	 * @returns Nothing
 	 */
