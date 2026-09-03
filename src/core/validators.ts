@@ -1,4 +1,4 @@
-import { isFiniteNumber, isInteger } from '@orkestrel/contract'
+import { isInteger } from '@orkestrel/contract'
 import { MAX_TIMEOUT_MS } from './constants.js'
 
 /**
@@ -14,7 +14,7 @@ import { MAX_TIMEOUT_MS } from './constants.js'
  * ```
  */
 export function isTimeoutDuration(value: unknown): value is number {
-	return isFiniteNumber(value) && isInteger(value) && value >= 0 && value <= MAX_TIMEOUT_MS
+	return isInteger(value) && value >= 0 && value <= MAX_TIMEOUT_MS
 }
 
 /**

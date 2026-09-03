@@ -1,6 +1,8 @@
 // The consumer-side guides-parity drop-in: runs `@orkestrel/guide`'s checks against
-// this repo's own `guides/README.md` manifest. The four constants below are this
-// package's own, and are the only part a sibling package changes.
+// this repo's own `guides/README.md` manifest, then executes this package's flagship
+// fences. The constants below, the `@src/core` import the executed cases use, and the
+// `flagship fences` block are this package's own, and are the parts a sibling package
+// changes.
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -18,8 +20,9 @@ import {
 	resolveLink,
 } from '@orkestrel/guide'
 import { readFileSync } from 'node:fs'
-import { requireValue } from '@orkestrel/test'
+import { requireValue, waitForDelay } from '@orkestrel/test'
 import { readInventory } from '@orkestrel/test/server'
+import { createTimeout } from '@src/core'
 
 /** Every fence language this package's guides are allowed to use. */
 const FENCE_LANGUAGES = Object.freeze(['ts'])
@@ -39,6 +42,9 @@ const INTERNAL: readonly string[] = Object.freeze([])
 
 /** Root-level files this package's guides link to. `readInventory` walks directories only. */
 const ROOT_FILES = Object.freeze(['AGENTS.md'])
+
+/** The guide whose flagship fences the executed cases at the end of this file transcribe. */
+const CORE_GUIDE = 'guides/timeout.md'
 
 const root = new URL('../', import.meta.url)
 const files: Record<string, string> = {
@@ -168,3 +174,97 @@ for (const entry of manifest) {
 		})
 	})
 }
+
+// The EXECUTED half of this file. Every check up to here reads a name — from the
+// guide text or from the barrel — and a name that resolves proves nothing about the
+// sentence beside it, so a fence whose comment claims a value the code contradicts
+// passes all of them. The cases here run each flagship fence and assert the values
+// its comments claim, each paired with a presence guard binding that fence's whole
+// body, so a line one fence shares with another cannot stand in for it. Change a
+// fence, change the transcription beside it.
+describe('flagship fences', () => {
+	const guideText = requireValue(files[CORE_GUIDE], `Missing file: ${CORE_GUIDE}`)
+	const readmeText = readFileSync(new URL('README.md', root), 'utf8')
+
+	it('aborts the Surface fence signal on expiry', async () => {
+		const timeout = createTimeout({ ms: 10 })
+
+		timeout.start()
+		expect(timeout.expired).toBe(false)
+		await waitForDelay(40)
+
+		expect(timeout.expired).toBe(true)
+		expect(timeout.signal.aborted).toBe(true)
+	})
+
+	it('carries the Surface fence lines the transcription copies', () => {
+		expect(guideText).toContain(
+			'const timeout = createTimeout({ ms: 5_000 })\ntimeout.start()\n\n// `signal` aborts on expiry — pass it anywhere a native AbortSignal is accepted:\nconst response = await fetch(url, { signal: timeout.signal })\n\ntimeout.clear() // work finished first — cancel the deadline',
+		)
+	})
+
+	it('cancels the still-armed deadline the race fence clears in its finally', async () => {
+		const timeout = createTimeout({ ms: 10 })
+		const signal = timeout.signal
+
+		timeout.start()
+		timeout.clear()
+		await waitForDelay(40)
+
+		expect(timeout.expired).toBe(false)
+		expect(timeout.signal).toBe(signal)
+		expect(timeout.signal.aborted).toBe(false)
+	})
+
+	it('carries the race fence and README clear lines the transcription copies', () => {
+		expect(guideText).toContain(
+			'\ttry {\n\t\treturn await fetch(url, { signal: timeout.signal })\n\t} finally {\n\t\ttimeout.clear() // cancels the still-armed deadline when the fetch won the race\n\t}',
+		)
+		expect(readmeText).toContain('timeout.clear() // work finished first — cancel the deadline')
+	})
+
+	it('leaves a parent-linked deadline unexpired when the parent aborts', async () => {
+		const parent = new AbortController()
+		const timeout = createTimeout({ id: 'request-deadline', ms: 10, signal: parent.signal })
+		const signal = timeout.signal
+
+		timeout.start()
+		parent.abort()
+		await waitForDelay(40)
+
+		expect(timeout.id).toBe('request-deadline')
+		expect(timeout.expired).toBe(false)
+		expect(timeout.signal).toBe(signal)
+		expect(timeout.signal.aborted).toBe(false)
+	})
+
+	it('carries the parent-link fence lines the transcription copies', () => {
+		expect(guideText).toContain(
+			"\tconst timeout = createTimeout({ id: 'request-deadline', ms, signal: parent })\n\ttimeout.start()\n\n\ttimeout.signal.addEventListener(\n\t\t'abort',\n\t\t() => {\n\t\t\tif (timeout.expired) giveUp() // only a real timeout expiry reaches this listener\n\t\t},\n\t\t{ once: true },\n\t)",
+		)
+	})
+
+	it('reuses a cleared handle for a fresh deadline window', async () => {
+		const timeout = createTimeout({ ms: 100 })
+		const signal = timeout.signal
+
+		timeout.start()
+		timeout.clear()
+
+		expect(timeout.expired).toBe(false)
+		expect(timeout.signal).toBe(signal)
+
+		timeout.start()
+		expect(timeout.expired).toBe(false)
+		await waitForDelay(140)
+
+		expect(timeout.expired).toBe(true)
+		expect(timeout.signal.aborted).toBe(true)
+	})
+
+	it('carries the reuse fence lines the transcription copies', () => {
+		expect(guideText).toContain(
+			'const timeout = createTimeout({ ms: 100 })\n\ntimeout.start()\ntimeout.clear() // cancels before firing — expired stays false\n\ntimeout.start() // re-armed; a fresh deadline window begins',
+		)
+	})
+})

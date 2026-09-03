@@ -27,21 +27,28 @@ import { validateTimeoutOptions } from './helpers.js'
  * ```
  */
 export class Timeout implements TimeoutInterface {
-	readonly id: string
-	readonly ms: number
+	readonly #id: string
+	readonly #ms: number
 	readonly #parent: AbortSignal | undefined
 	readonly #listener: () => void
 	#controller: AbortController
 	#handle: ReturnType<typeof setTimeout> | undefined
-	#linked = false
 
 	constructor(options: TimeoutOptions) {
 		const input = validateTimeoutOptions(options)
-		this.id = input.id === undefined ? crypto.randomUUID() : input.id
-		this.ms = input.ms
+		this.#id = input.id === undefined ? crypto.randomUUID() : input.id
+		this.#ms = input.ms
 		this.#parent = input.signal
 		this.#controller = new AbortController()
 		this.#listener = this.clear.bind(this)
+	}
+
+	get id(): string {
+		return this.#id
+	}
+
+	get ms(): number {
+		return this.#ms
 	}
 
 	get signal(): AbortSignal {
@@ -62,13 +69,12 @@ export class Timeout implements TimeoutInterface {
 		if (this.#controller.signal.aborted) this.#controller = new AbortController()
 		if (this.#parent !== undefined) {
 			this.#parent.addEventListener('abort', this.#listener, { once: true })
-			this.#linked = true
 		}
 		this.#handle = setTimeout(() => {
 			this.#handle = undefined
 			this.#detach()
 			this.#controller.abort()
-		}, this.ms)
+		}, this.#ms)
 	}
 
 	clear(): void {
@@ -81,9 +87,6 @@ export class Timeout implements TimeoutInterface {
 	}
 
 	#detach(): void {
-		if (this.#linked) {
-			this.#parent?.removeEventListener('abort', this.#listener)
-			this.#linked = false
-		}
+		this.#parent?.removeEventListener('abort', this.#listener)
 	}
 }

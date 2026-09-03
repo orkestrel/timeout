@@ -2,19 +2,14 @@ import type { TimeoutInterface, TimeoutOptions } from '@src/core'
 import { MAX_TIMEOUT_MS, Timeout } from '@src/core'
 import { isContractError } from '@orkestrel/contract'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createRecorder, waitForDelay } from '@orkestrel/test'
+import { captureError, createRecorder, waitForDelay } from '@orkestrel/test'
 
 const MS = 10
 const WAIT_MS = 40
 
 describe('Timeout construction boundary', () => {
 	it('routes malformed options through the strict public boundary', () => {
-		let error: unknown
-		try {
-			Reflect.construct(Timeout, [null])
-		} catch (caught) {
-			error = caught
-		}
+		const error = captureError(() => Reflect.construct(Timeout, [null]))
 
 		expect(isContractError(error)).toBe(true)
 		if (!isContractError(error)) throw new Error('Expected a ContractError')
@@ -27,12 +22,7 @@ describe('Timeout construction boundary', () => {
 	})
 
 	it('routes invalid fields through the strict public boundary', () => {
-		let error: unknown
-		try {
-			Reflect.construct(Timeout, [{ ms: MAX_TIMEOUT_MS + 1 }])
-		} catch (caught) {
-			error = caught
-		}
+		const error = captureError(() => Reflect.construct(Timeout, [{ ms: MAX_TIMEOUT_MS + 1 }]))
 
 		expect(isContractError(error)).toBe(true)
 		if (!isContractError(error)) throw new Error('Expected a ContractError')
@@ -57,13 +47,8 @@ describe('Timeout construction boundary', () => {
 	it('fails synchronously before the next timer turn', async () => {
 		const turned = createRecorder<readonly []>()
 		setTimeout(turned.handler, 0)
-		let error: unknown
 
-		try {
-			Reflect.construct(Timeout, [{ ms: Number.NaN }])
-		} catch (caught) {
-			error = caught
-		}
+		const error = captureError(() => Reflect.construct(Timeout, [{ ms: Number.NaN }]))
 
 		expect(isContractError(error)).toBe(true)
 		expect(turned.count).toBe(0)
@@ -234,6 +219,22 @@ describe('Timeout parent lifecycle', () => {
 		expect(timeout.signal).toBe(signal)
 		expect(timeout.signal.aborted).toBe(false)
 		expect(fired.count).toBe(0)
+	})
+
+	it('clearing a parented handle that never armed leaves a later parent abort inert', async () => {
+		const parent = new AbortController()
+		const timeout = new Timeout({ ms: MS, signal: parent.signal })
+		const signal = timeout.signal
+
+		// `clear()` before any `start()` detaches a parent listener that was never
+		// attached, which is the one path a link-tracking flag used to shield.
+		timeout.clear()
+		parent.abort()
+		await waitForDelay(WAIT_MS)
+
+		expect(timeout.expired).toBe(false)
+		expect(timeout.signal).toBe(signal)
+		expect(timeout.signal.aborted).toBe(false)
 	})
 
 	it('parent abort after expiry does not reset a legitimate expiry', async () => {

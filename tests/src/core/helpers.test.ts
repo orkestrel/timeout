@@ -1,25 +1,9 @@
 import type { TimeoutOptions } from '@src/core'
 import { MAX_TIMEOUT_MS, validateTimeoutOptions } from '@src/core'
 import { isContractError, preview } from '@orkestrel/contract'
+import { captureError } from '@orkestrel/test'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-
-let reads: PropertyKey[] = []
-
-const handler: ProxyHandler<TimeoutOptions> = {
-	get(target, property, receiver) {
-		reads.push(property)
-		return Reflect.get(target, property, receiver)
-	},
-}
-
-function capture(operation: () => unknown): unknown {
-	try {
-		operation()
-	} catch (error) {
-		return error
-	}
-	throw new Error('Expected the operation to throw')
-}
+import { createReadRecorder } from '../../setup.js'
 
 describe('validateTimeoutOptions', () => {
 	it('returns a fresh copy and omits absent optional keys', () => {
@@ -42,16 +26,16 @@ describe('validateTimeoutOptions', () => {
 	})
 
 	it('reads each declared property exactly once', () => {
-		reads = []
-		const input = new Proxy<TimeoutOptions>(
-			{ id: 'deadline', ms: 10, signal: new AbortController().signal },
-			handler,
-		)
+		const recorder = createReadRecorder<TimeoutOptions>({
+			id: 'deadline',
+			ms: 10,
+			signal: new AbortController().signal,
+		})
 
-		const output = validateTimeoutOptions(input)
+		const output = validateTimeoutOptions(recorder.proxy)
 
 		expect(output.id).toBe('deadline')
-		expect(reads).toEqual(['id', 'ms', 'signal'])
+		expect(recorder.reads).toEqual(['id', 'ms', 'signal'])
 	})
 
 	it('contains a hostile getter and preserves its cause', () => {
@@ -59,7 +43,7 @@ describe('validateTimeoutOptions', () => {
 		if (descriptor === undefined) throw new Error('Expected the native aborted descriptor')
 		const input = {}
 		Object.defineProperty(input, 'ms', descriptor)
-		const error = capture(() => Reflect.apply(validateTimeoutOptions, undefined, [input]))
+		const error = captureError(() => Reflect.apply(validateTimeoutOptions, undefined, [input]))
 
 		expect(isContractError(error)).toBe(true)
 		if (!isContractError(error)) throw new Error('Expected a ContractError')
@@ -94,7 +78,7 @@ describe('validateTimeoutOptions', () => {
 	])(
 		'rejects invalid %s with exact contract context',
 		(_field, input, code, path, limit, received) => {
-			const error = capture(() => Reflect.apply(validateTimeoutOptions, undefined, [input]))
+			const error = captureError(() => Reflect.apply(validateTimeoutOptions, undefined, [input]))
 
 			expect(isContractError(error)).toBe(true)
 			if (!isContractError(error)) throw new Error('Expected a ContractError')

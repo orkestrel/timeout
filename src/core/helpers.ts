@@ -13,8 +13,8 @@ import { isTimeoutDuration, isTimeoutSignal } from './validators.js'
  *
  * @param options - Potentially untrusted timeout options
  * @returns A fresh validated `TimeoutOptions` object
- * @throws {@link import('@orkestrel/contract').ContractError} When the input
- *   does not satisfy `TimeoutOptions`
+ * @throws {@link import('@orkestrel/contract').ContractError} Thrown when the
+ *   input does not satisfy `TimeoutOptions`
  *
  * @example
  * ```ts

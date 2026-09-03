@@ -36,18 +36,31 @@ export interface TimeoutInterface {
 	readonly id: string
 	/** Holds the validated integer deadline in milliseconds. */
 	readonly ms: number
-	/** Holds the native signal that aborts once when the current deadline expires. */
+	/**
+	 * Holds the native signal that aborts once when the current deadline
+	 * expires. A `start()` or `clear()` call after an expiry installs a fresh
+	 * signal, so a caller holding an earlier reference keeps the aborted one.
+	 */
 	readonly signal: AbortSignal
 	/** Reports whether the owned signal has aborted, derived directly from that signal. */
 	readonly expired: boolean
 	/**
 	 * Arms or re-arms the deadline.
 	 *
+	 * @remarks
+	 * Returns without arming when the parent `signal` supplied at construction
+	 * has already aborted, so a handle whose parent aborted never expires again
+	 * and its `signal` never fires.
+	 *
 	 * @returns Nothing
 	 */
 	start(): void
 	/**
 	 * Cancels an armed deadline without aborting its signal and resets expiry state.
+	 *
+	 * @remarks
+	 * Installs a fresh non-aborted signal when the current signal has already
+	 * aborted; a signal that never fired keeps its identity.
 	 *
 	 * @returns Nothing
 	 */

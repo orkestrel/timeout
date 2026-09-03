@@ -3,11 +3,11 @@
 A typed, **controllable** `setTimeout` wrapper — a deadline handle that
 exposes an `AbortSignal` which fires on expiry, for racing against work.
 Deliberately small: `start()` arms the deadline, `clear()` cancels it without
-firing, and re-`start()`ing a handle after expiry reuses it for a fresh
-deadline without re-construction. An optional parent `signal` links in without
-inheriting `AbortSignal.any` semantics — a parent abort during the timing
-window _clears_ the timeout (it never expires) rather than firing it. Part of
-the `@orkestrel` line.
+firing, and calling `start()` again after expiry reuses the handle for a
+fresh deadline without re-construction. An optional parent `signal` links in
+without inheriting `AbortSignal.any` semantics — a parent abort during the
+timing window _clears_ the timeout (it never expires) rather than firing it.
+Part of the `@orkestrel` line.
 
 ## Install
 
@@ -17,8 +17,8 @@ npm install @orkestrel/timeout
 
 ## Requirements
 
-- Node.js >= 24
-- ESM-only (no CommonJS build)
+- Node.js >= 22.12.0, matching the `engines` field in `package.json`
+- ESM (`import`) and CommonJS (`require`) through the `exports` field
 
 ## Usage
 
