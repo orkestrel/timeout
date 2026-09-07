@@ -2,7 +2,8 @@ import type { TimeoutInterface, TimeoutOptions } from './types.js'
 import { validateTimeoutOptions } from './helpers.js'
 
 /**
- * Represents a controllable deadline whose native `AbortSignal` aborts when it expires.
+ * Implements `TimeoutInterface` exactly, as a controllable `setTimeout` wrapper over one
+ * owned `AbortController` whose signal aborts when the deadline expires.
  *
  * @remarks
  * `start()` arms or replaces the current deadline. Expiry sets `expired` and

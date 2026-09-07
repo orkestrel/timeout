@@ -1,5 +1,5 @@
 /**
- * Represents the options for constructing a timeout deadline.
+ * Represents the options `createTimeout` and the `Timeout` constructor accept.
  *
  * @remarks
  * `ms` is an integer from `0` through `2_147_483_647`, inclusive. `id`
@@ -45,7 +45,8 @@ export interface TimeoutInterface {
 	/** Reports whether the owned signal has aborted, derived directly from that signal. */
 	readonly expired: boolean
 	/**
-	 * Arms or re-arms the deadline.
+	 * Arms or re-arms the deadline for `ms`, installing a fresh `signal` when the
+	 * current one has already aborted.
 	 *
 	 * @remarks
 	 * Returns without arming when the parent `signal` supplied at construction
@@ -56,11 +57,11 @@ export interface TimeoutInterface {
 	 */
 	start(): void
 	/**
-	 * Cancels an armed deadline without aborting its signal and resets expiry state.
+	 * Cancels an armed deadline without aborting its `signal`, and resets expiry by
+	 * installing a fresh signal when the current one has already aborted.
 	 *
 	 * @remarks
-	 * Installs a fresh non-aborted signal when the current signal has already
-	 * aborted; a signal that never fired keeps its identity.
+	 * A signal that never fired keeps its identity.
 	 *
 	 * @returns Nothing
 	 */

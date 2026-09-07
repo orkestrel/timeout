@@ -1,17 +1,17 @@
 # Timeout
 
-> A controllable `setTimeout` wrapper that exposes an `AbortSignal` which fires
-> on expiry, for racing work against a deadline. A `Timeout` carries a trace
-> `id`, a deadline `ms`, and `start()` / `clear()` controls — arm the deadline,
-> then race its `signal` against work to bound how long that work may run. The
-> time-bound half of the substrate's time-and-cancellation pair. Deliberately
-> thin: it is not a scheduler, not a debounce/throttle, not a retry policy —
-> one `setTimeout` made re-armable, clearable, and parent-linkable. Its native
-> `AbortSignal` is the complete observation surface; there is no separate event
-> map. `start()` arms the deadline, `clear()` cancels it without firing, and
-> calling `start()` again after an expiry swaps in a fresh signal, so a handle
-> is reusable across deadlines without re-construction. Source:
-> [`src/core`](../src/core). Surfaced through the `@src/core` barrel.
+> The time-bound half of the substrate's time-and-cancellation pair: a
+> controllable `setTimeout` wrapper carrying a trace `id` and a deadline `ms`,
+> whose native `AbortSignal` aborts on expiry.
+
+Arm the deadline with `start()`, then race its `signal` against work to bound
+how long that work may run; `clear()` cancels the deadline without firing it,
+and a `start()` after an expiry swaps in a fresh signal, so one handle serves a
+sequence of deadlines without re-construction. The package is deliberately
+thin: not a scheduler, not a debounce, not a retry policy — one `setTimeout`
+made re-armable, clearable, and parent-linkable. The native signal is the
+complete observation surface, so there is no separate event map. Source:
+[`src/core`](../src/core). Surfaced through the `@src/core` barrel.
 
 ## Surface
 
@@ -45,44 +45,46 @@ defaults to a random UUID.
 
 ### Factories
 
-| API             | Kind     | Summary                                                            |
-| --------------- | -------- | ------------------------------------------------------------------ |
-| `createTimeout` | function | Create a `TimeoutInterface` deadline handle from `TimeoutOptions`. |
+| API             | Kind     | Summary                                                                                           |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `createTimeout` | function | Creates a deadline handle from validated `TimeoutOptions` and returns it as a `TimeoutInterface`. |
 
-### Entities
+### Classes
 
-| API       | Kind  | Summary                                                                       |
-| --------- | ----- | ----------------------------------------------------------------------------- |
-| `Timeout` | class | The controllable `setTimeout` wrapper; implements `TimeoutInterface` exactly. |
+| API       | Kind  | Summary                                                                                                                                                       |
+| --------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Timeout` | class | Implements `TimeoutInterface` exactly, as a controllable `setTimeout` wrapper over one owned `AbortController` whose signal aborts when the deadline expires. |
 
 ### Constants
 
-| API              | Kind  | Summary                                                  |
-| ---------------- | ----- | -------------------------------------------------------- |
-| `MAX_TIMEOUT_MS` | const | Largest accepted duration: `2_147_483_647` milliseconds. |
+| API              | Kind  | Summary                                                                               |
+| ---------------- | ----- | ------------------------------------------------------------------------------------- |
+| `MAX_TIMEOUT_MS` | const | Names the largest timeout duration the package accepts, `2_147_483_647` milliseconds. |
 
 ### Validators
 
-| API                 | Kind     | Summary                                                        |
-| ------------------- | -------- | -------------------------------------------------------------- |
-| `isTimeoutDuration` | function | Total validator for an integer in the inclusive timeout range. |
-| `isTimeoutSignal`   | function | Total native-brand validator for a genuine `AbortSignal`.      |
+| API                 | Kind     | Summary                                                                                                                                |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `isTimeoutDuration` | function | Determines whether a value is an integer in the inclusive range from `0` through `MAX_TIMEOUT_MS`, staying total for every input.      |
+| `isTimeoutSignal`   | function | Determines whether a value is a genuine native `AbortSignal`, staying total for a structural spoof and for a hostile or revoked proxy. |
 
 ### Helpers
 
-| API                      | Kind     | Summary                                                                                 |
-| ------------------------ | -------- | --------------------------------------------------------------------------------------- |
-| `validateTimeoutOptions` | function | Validate once-read timeout options and return a fresh copy omitting absent option keys. |
+| API                      | Kind     | Summary                                                                                                             |
+| ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `validateTimeoutOptions` | function | Validates once-read timeout construction options and returns a fresh normalized copy omitting absent optional keys. |
 
 ### Types
 
-| Type               | Kind      | Shape                                                                                                |
-| ------------------ | --------- | ---------------------------------------------------------------------------------------------------- |
-| `TimeoutOptions`   | interface | `{ id?: string; ms: number; signal?: AbortSignal }` — options for `createTimeout` / the constructor. |
-| `TimeoutInterface` | interface | `id` / `ms` / `signal` / `expired` data members + `start` / `clear` methods.                         |
+A `Shape` cell holds an interface's members in braces.
 
-The `id`, `ms`, `signal`, and `expired` members are `readonly` data members of
-`TimeoutInterface` (the preceding Surface rows) — its call-signature methods
+| Type               | Kind      | Shape                                               | Summary                                                                                   |
+| ------------------ | --------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `TimeoutOptions`   | interface | `{ id?: string; ms: number; signal?: AbortSignal }` | Represents the options `createTimeout` and the `Timeout` constructor accept.              |
+| `TimeoutInterface` | interface | `{ id, ms, signal, expired, start, clear }`         | Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry. |
+
+The `id`, `ms`, `signal`, and `expired` members of `TimeoutInterface` are
+`readonly` data members (Surface rows, earlier) — its call-signature methods
 are documented under [Methods](#methods). `expired` derives directly from the
 owned signal's `aborted` state rather than storing a duplicate lifecycle flag.
 
@@ -95,13 +97,12 @@ class's instance-method surface (AGENTS.md, Documentation contract).
 
 #### `TimeoutInterface`
 
-`start` arms (or re-arms) the deadline; `clear` cancels a pending expiry
-without firing.
+The call-signature members, each with the type it returns:
 
-| Method  | Returns | Behavior                                                                                           |
-| ------- | ------- | -------------------------------------------------------------------------------------------------- |
-| `start` | `void`  | Arm the deadline for `ms`. Re-arming swaps a fresh `signal` if the prior one fired.                |
-| `clear` | `void`  | Cancel a pending expiry without firing `signal`; after expiry, swap in a fresh non-aborted signal. |
+| Method  | Returns | Summary                                                                                                                                           |
+| ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start` | `void`  | Arms or re-arms the deadline for `ms`, installing a fresh `signal` when the current one has already aborted.                                      |
+| `clear` | `void`  | Cancels an armed deadline without aborting its `signal`, and resets expiry by installing a fresh signal when the current one has already aborted. |
 
 ## Contract
 
@@ -210,6 +211,13 @@ timeout.start() // re-armed; a fresh deadline window begins
 
 ## Tests
 
+- [`tests/guides.test.ts`](../tests/guides.test.ts) — the `## Surface` ↔
+  `src/core` bijection over value and type exports, the `TimeoutInterface` ↔
+  `Timeout` method bijection, and the equality gate: every `Summary` cell
+  against its declaration's description paragraph, the titled fence against the
+  `@example` block of that title (pinned so the titled pair cannot be retired
+  silently), and the README pitch against this guide's tagline. It also runs the
+  flagship fences and asserts the values their comments claim.
 - [`tests/src/core/Timeout.test.ts`](../tests/src/core/Timeout.test.ts) —
   public-constructor integration, real expiry / clear / replacement / churn
   behavior, signal identity and derived expiry, and the intentional parent-clear

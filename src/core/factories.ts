@@ -2,7 +2,8 @@ import type { TimeoutInterface, TimeoutOptions } from './types.js'
 import { Timeout } from './Timeout.js'
 
 /**
- * Creates a controllable deadline whose native signal aborts on expiry.
+ * Creates a deadline handle from validated `TimeoutOptions` and returns it as a
+ * `TimeoutInterface`.
  *
  * @remarks
  * `options.ms` must be an integer from `0` through `2_147_483_647`, inclusive.
@@ -19,16 +20,19 @@ import { Timeout } from './Timeout.js'
  * @throws {@link import('@orkestrel/contract').ContractError} Thrown when the
  *   JavaScript input does not satisfy `TimeoutOptions`
  *
- * @example
+ * @example Race work against a deadline
  * ```ts
  * import { createTimeout } from '@orkestrel/timeout'
  *
- * const timeout = createTimeout({ ms: 5_000 })
- * timeout.start()
- * try {
- * 	await fetch('/work', { signal: timeout.signal })
- * } finally {
- * 	timeout.clear()
+ * async function fetchWithDeadline(url: string, ms: number): Promise<Response> {
+ * 	const timeout = createTimeout({ ms })
+ * 	timeout.start()
+ *
+ * 	try {
+ * 		return await fetch(url, { signal: timeout.signal })
+ * 	} finally {
+ * 		timeout.clear() // cancels the still-armed deadline when the fetch won the race
+ * 	}
  * }
  * ```
  */

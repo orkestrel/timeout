@@ -1,13 +1,14 @@
 # @orkestrel/timeout
 
-A typed, **controllable** `setTimeout` wrapper — a deadline handle that
-exposes an `AbortSignal` which fires on expiry, for racing against work.
-Deliberately small: `start()` arms the deadline, `clear()` cancels it without
-firing, and calling `start()` again after expiry reuses the handle for a
-fresh deadline without re-construction. An optional parent `signal` links in
-without inheriting `AbortSignal.any` semantics — a parent abort during the
-timing window _clears_ the timeout (it never expires) rather than firing it.
-Part of the `@orkestrel` line.
+> The time-bound half of the substrate's time-and-cancellation pair: a
+> controllable `setTimeout` wrapper carrying a trace `id` and a deadline `ms`,
+> whose native `AbortSignal` aborts on expiry.
+
+Create a handle with the `createTimeout` function, call `start()` to arm the
+deadline, and hand its signal to the fetch, stream, or queue task the deadline
+bounds; call `clear()` when that work finishes first. Pass a parent signal
+where an outer cancellation must retire the deadline rather than let it expire;
+that link carries no `AbortSignal.any` semantics. Part of the `@orkestrel` line.
 
 ## Install
 

@@ -4,11 +4,11 @@ import { MAX_TIMEOUT_MS } from './constants.js'
 import { isTimeoutDuration, isTimeoutSignal } from './validators.js'
 
 /**
- * Validates and normalizes timeout construction options.
+ * Validates once-read timeout construction options and returns a fresh normalized copy
+ * omitting absent optional keys.
  *
  * @remarks
- * Each property is read exactly once before validation. The returned object is
- * a fresh copy and omits absent optional properties. No timer, controller, or
+ * Each property is read before any validation runs, and no timer, controller, or
  * listener lifecycle begins at this boundary.
  *
  * @param options - Potentially untrusted timeout options
