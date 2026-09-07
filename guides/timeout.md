@@ -16,7 +16,7 @@ complete observation surface, so there is no separate event map. Source:
 ## Surface
 
 Create a deadline handle, arm it, and hand its `signal` to deadline-aware
-work — `clear()` the deadline if the work finishes first:
+work — call `clear()` on the deadline if the work finishes first:
 
 ```ts
 import { createTimeout } from '@orkestrel/timeout'
@@ -39,7 +39,7 @@ code `bound`, while invalid `id`, `ms`, and `signal` values use `literal`,
 `range`, and `placement`, respectively. Each error carries safe `path`, `limit`,
 and `received` context. The package does not re-export `ContractError`.
 
-An optional parent signal CLEARS the timeout rather than expiring it if it
+An optional parent signal clears the timeout rather than expiring it if it
 aborts before the deadline. An optional `id` labels the handle for tracing and
 defaults to a random UUID.
 
@@ -78,22 +78,23 @@ defaults to a random UUID.
 
 A `Shape` cell holds an interface's members in braces.
 
-| Type               | Kind      | Shape                                               | Summary                                                                                   |
-| ------------------ | --------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `TimeoutOptions`   | interface | `{ id?: string; ms: number; signal?: AbortSignal }` | Represents the options `createTimeout` and the `Timeout` constructor accept.              |
-| `TimeoutInterface` | interface | `{ id, ms, signal, expired, start, clear }`         | Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry. |
+| Type               | Kind      | Shape                                       | Summary                                                                                   |
+| ------------------ | --------- | ------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `TimeoutOptions`   | interface | `{ id?, ms, signal? }`                      | Represents the options `createTimeout` and the `Timeout` constructor accept.              |
+| `TimeoutInterface` | interface | `{ id, ms, signal, expired, start, clear }` | Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry. |
 
-The `id`, `ms`, `signal`, and `expired` members of `TimeoutInterface` are
-`readonly` data members (Surface rows, earlier) — its call-signature methods
-are documented under [Methods](#methods). `expired` derives directly from the
-owned signal's `aborted` state rather than storing a duplicate lifecycle flag.
+`TimeoutInterface` lists every member it declares. The `id`, `ms`, `signal`,
+and `expired` its `Shape` cell lists are `readonly` members with no method row;
+`start` and `clear` are its call-signature methods, documented under
+[Methods](#methods). `expired` derives directly from the owned signal's
+`aborted` state rather than storing a duplicate lifecycle flag.
 
 ## Methods
 
 The public methods of `TimeoutInterface` — every call-signature member listed
-(its `readonly` data members `id` / `ms` / `signal` / `expired` stay Surface
-rows). `Timeout` implements the interface exactly, so this doubles as the
-class's instance-method surface (AGENTS.md, Documentation contract).
+(its `readonly` members `id` / `ms` / `signal` / `expired` have no method row).
+`Timeout` implements the interface exactly, so this doubles as the class's
+instance-method surface (AGENTS.md, Documentation contract).
 
 #### `TimeoutInterface`
 
@@ -122,14 +123,14 @@ These invariants hold across `src/core` ↔ `timeout.md`:
    zero intentionally expires on the next turn. Invalid inputs throw the coded
    `ContractError` taxonomy described under Surface.
 3. **Deadline signal and derived expiry.** The exposed `signal` fires (aborts)
-   on expiry. `expired` derives from that owned signal's `aborted` state, so the
-   two facts cannot drift.
+   on expiry. `expired` derives from that owned signal's `aborted` state, so
+   `expired` and `aborted` cannot drift apart.
 4. **Signal identity swaps only on a real expiry.** A cleared-but-never-fired
    timeout keeps its original `signal` (not aborted); the identity is only
    swapped for a fresh, non-aborted controller after the current controller has
    fired — whether that swap happens inside `clear()` or at the next `start()`.
 5. **Parent linking clears, never expires.** A parent `options.signal` abort
-   CLEARS the timeout — it does not expire the timeout, abort the timeout's own
+   clears the timeout — it does not expire the timeout, abort the timeout's own
    signal, or forward the parent reason. The parent listener is attached only
    while a timer is armed (added on `start()`, removed on expiry or `clear()`);
    once the parent has aborted, a later `start()` is a no-op.

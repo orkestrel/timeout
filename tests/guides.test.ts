@@ -29,6 +29,8 @@ import { createTimeout } from '@src/core'
 const FENCE_LANGUAGES = Object.freeze(['ts'])
 /** The fence language whose blocks count as worked examples. */
 const EXAMPLE_LANGUAGE = 'ts'
+/** The one guide this package sources, whose tagline the README pitch equals. */
+const GUIDE_SPEC = 'guides/timeout.md'
 /** Each import specifier this package's own guides may resolve against. */
 const MODULES = Object.freeze({ '@orkestrel/timeout': 'src/core', '@src/core': 'src/core' })
 /**
@@ -43,9 +45,6 @@ const INTERNAL: readonly string[] = Object.freeze([])
 
 /** Root-level files these checks read. `readInventory` walks directories only. */
 const ROOT_FILES = Object.freeze(['AGENTS.md', 'README.md'])
-
-/** The one guide this package sources, whose tagline the README pitch equals. */
-const GUIDE_SPEC = 'guides/timeout.md'
 
 const root = new URL('../', import.meta.url)
 const files: Record<string, string> = {
@@ -212,19 +211,19 @@ for (const entry of manifest) {
 		for (const group of guide.methods()) {
 			const entity = group.interface.replace(/Interface$/, '')
 			const documented = group.methods.map((method) => method.name)
+			const examples =
+				entity === group.interface
+					? source.examples(group.interface).map((example) => example.name)
+					: source
+							.examples(group.interface)
+							.map((example) => example.name)
+							.concat(source.examples(entity).map((example) => example.name))
 			describe(`${group.interface} examples`, () => {
 				it('documents an example for every method', () => {
 					const fences = guide
 						.fences()
 						.filter((fence) => fence.language === EXAMPLE_LANGUAGE)
 						.map((fence) => fence.code)
-					const examples =
-						entity === group.interface
-							? source.examples(group.interface).map((example) => example.name)
-							: source
-									.examples(group.interface)
-									.map((example) => example.name)
-									.concat(source.examples(entity).map((example) => example.name))
 					expect(findUnexampled(documented, fences, examples)).toEqual([])
 				})
 			})
