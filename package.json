@@ -1,6 +1,6 @@
 {
 	"name": "@orkestrel/timeout",
-	"version": "0.0.9",
+	"version": "0.0.10",
 	"description": "A typed, controllable setTimeout wrapper — an AbortSignal deadline with start/clear lifecycle and parent-signal linking. Part of the @orkestrel line.",
 	"keywords": [
 		"abort-signal",
@@ -67,7 +67,8 @@
 		"test:probe": "vitest run --config vite.config.ts --no-cache --reporter=verbose --project probe",
 		"test:bench": "vitest bench --config vite.config.ts --no-cache --project probe",
 		"prepack": "npm run build",
-		"test:setup": "vitest run --config vite.config.ts --no-cache --reporter=dot --project setup"
+		"test:setup": "vitest run --config vite.config.ts --no-cache --reporter=dot --project setup",
+		"docs": "node --experimental-strip-types scripts/docs.ts"
 	},
 	"dependencies": {
 		"@orkestrel/contract": "^0.0.16"
