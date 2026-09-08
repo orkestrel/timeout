@@ -1,8 +1,6 @@
 // The consumer-side guides-parity drop-in: runs `@orkestrel/guide`'s checks against
-// this repo's own `guides/README.md` manifest, then executes this package's flagship
-// fences. The constants below, the `@src/core` import the executed cases use, and the
-// `flagship fences` block are this package's own, and are the parts a sibling package
-// changes.
+// this repo's own `guides/README.md` manifest. The constants that follow are this
+// package's own, as is the executed section that closes the file.
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -38,7 +36,7 @@ const MODULES = Object.freeze({ '@orkestrel/timeout': 'src/core', '@src/core': '
  *
  * A class that one-class-per-file evicted from its single consumer cannot become a
  * local, so it stays exported without being public. Naming it here is what makes that
- * intentional rather than forgotten — and the second assertion below fails when a name
+ * intentional rather than forgotten — and the assertion that follows it fails when a name
  * here stops being stranded, so the list cannot rot.
  */
 const INTERNAL: readonly string[] = Object.freeze([])

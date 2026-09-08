@@ -57,16 +57,20 @@ defaults to a random UUID.
 
 ### Constants
 
-| API              | Kind  | Summary                                                                               |
-| ---------------- | ----- | ------------------------------------------------------------------------------------- |
-| `MAX_TIMEOUT_MS` | const | Names the largest timeout duration the package accepts, `2_147_483_647` milliseconds. |
+A `Shape` cell holds the constant's declared type.
+
+| API              | Kind  | Shape    | Summary                                                                               |
+| ---------------- | ----- | -------- | ------------------------------------------------------------------------------------- |
+| `MAX_TIMEOUT_MS` | const | `number` | Names the largest timeout duration the package accepts, `2_147_483_647` milliseconds. |
 
 ### Validators
 
-| API                 | Kind     | Summary                                                                                                                                |
-| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `isTimeoutDuration` | function | Determines whether a value is an integer in the inclusive range from `0` through `MAX_TIMEOUT_MS`, staying total for every input.      |
-| `isTimeoutSignal`   | function | Determines whether a value is a genuine native `AbortSignal`, staying total for a structural spoof and for a hostile or revoked proxy. |
+In a guard table a `Shape` cell holds the type the guard narrows to.
+
+| API                 | Kind     | Shape         | Summary                                                                                                                                |
+| ------------------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `isTimeoutDuration` | function | `number`      | Determines whether a value is an integer in the inclusive range from `0` through `MAX_TIMEOUT_MS`, staying total for every input.      |
+| `isTimeoutSignal`   | function | `AbortSignal` | Determines whether a value is a genuine native `AbortSignal`, staying total for a structural spoof and for a hostile or revoked proxy. |
 
 ### Helpers
 
@@ -76,18 +80,17 @@ defaults to a random UUID.
 
 ### Types
 
-A `Shape` cell holds an interface's members in braces.
+A `Shape` cell holds an interface's data members as bare names in braces, `?` marking an optional member and `plus` introducing its call-signature members, and a type alias's own type literal with a union's arms escaped as `\|`.
 
-| Type               | Kind      | Shape                                       | Summary                                                                                   |
-| ------------------ | --------- | ------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `TimeoutOptions`   | interface | `{ id?, ms, signal? }`                      | Represents the options `createTimeout` and the `Timeout` constructor accept.              |
-| `TimeoutInterface` | interface | `{ id, ms, signal, expired, start, clear }` | Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry. |
+| Type               | Kind      | Shape                                           | Summary                                                                                   |
+| ------------------ | --------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `TimeoutOptions`   | interface | `{ id?, ms, signal? }`                          | Represents the options `createTimeout` and the `Timeout` constructor accept.              |
+| `TimeoutInterface` | interface | `{ id, ms, signal, expired } plus start, clear` | Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry. |
 
-`TimeoutInterface` lists every member it declares. The `id`, `ms`, `signal`,
-and `expired` its `Shape` cell lists are `readonly` members with no method row;
-`start` and `clear` are its call-signature methods, documented under
-[Methods](#methods). `expired` derives directly from the owned signal's
-`aborted` state rather than storing a duplicate lifecycle flag.
+The `id`, `ms`, `signal`, and `expired` members of `TimeoutInterface` are
+`readonly` data members (Shape cell, earlier) — its call-signature methods are
+documented under [Methods](#methods). `expired` derives directly from the
+owned signal's `aborted` state rather than storing a duplicate lifecycle flag.
 
 ## Methods
 
@@ -144,6 +147,8 @@ These invariants hold across `src/core` ↔ `timeout.md`:
 
 ### Race work against a deadline
 
+Builds a deadline handle, arms it, and clears it in a `finally` once the race resolves:
+
 ```ts
 import { createTimeout } from '@orkestrel/timeout'
 
@@ -185,6 +190,8 @@ function withDeadline(parent: AbortSignal, ms: number) {
 ```
 
 ### Reuse a handle across deadlines
+
+Clears an armed deadline before it fires, then arms the same handle again for a fresh window:
 
 ```ts
 import { createTimeout } from '@orkestrel/timeout'
