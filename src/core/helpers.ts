@@ -1,5 +1,5 @@
 import type { TimeoutOptions } from './types.js'
-import { ContractError, isRecord, isString, preview } from '@orkestrel/contract'
+import { ContractError, isRecord, isString, preview, readValue } from '@orkestrel/contract'
 import { MAX_TIMEOUT_MS } from './constants.js'
 import { isTimeoutDuration, isTimeoutSignal } from './validators.js'
 
@@ -33,24 +33,23 @@ export function validateTimeoutOptions(options: TimeoutOptions): TimeoutOptions 
 		})
 	}
 
-	let id: TimeoutOptions['id']
-	let ms: TimeoutOptions['ms']
-	let signal: TimeoutOptions['signal']
-	try {
-		id = options.id
-		ms = options.ms
-		signal = options.signal
-	} catch (cause) {
-		throw new ContractError('Timeout: options could not be read', {
+	const { id, ms, signal } = readValue(
+		() => ({
+			id: options.id,
+			ms: options.ms,
+			signal: options.signal,
+		}),
+		'Timeout',
+		{
+			subject: 'options',
 			code: 'bound',
 			context: {
 				path: ['options'],
 				limit: 'readable plain record',
 				received: preview(options),
 			},
-			cause,
-		})
-	}
+		},
+	)
 
 	if (id !== undefined && !isString(id)) {
 		throw new ContractError('Timeout: id must be a string when defined', {

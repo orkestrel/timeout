@@ -1,4 +1,4 @@
-import { isInteger } from '@orkestrel/contract'
+import { holds, isBoolean, isFunction, isInteger } from '@orkestrel/contract'
 import { MAX_TIMEOUT_MS } from './constants.js'
 
 /**
@@ -36,11 +36,9 @@ export function isTimeoutDuration(value: unknown): value is number {
  * ```
  */
 export function isTimeoutSignal(value: unknown): value is AbortSignal {
-	try {
-		const descriptor = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')
-		if (descriptor?.get === undefined) return false
-		return typeof Reflect.apply(descriptor.get, value, []) === 'boolean'
-	} catch {
-		return false
-	}
+	return holds(() => {
+		const getter = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted')?.get
+		if (!isFunction(getter)) return false
+		return isBoolean(Reflect.apply(getter, value, []))
+	})
 }
