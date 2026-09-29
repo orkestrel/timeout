@@ -1,6 +1,6 @@
 {
 	"name": "@orkestrel/timeout",
-	"version": "0.0.11",
+	"version": "0.0.12",
 	"description": "A typed, controllable setTimeout wrapper — an AbortSignal deadline with start/clear lifecycle and parent-signal linking. Part of the @orkestrel line.",
 	"keywords": [
 		"abort-signal",
