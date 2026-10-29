@@ -115,10 +115,10 @@ describe('Timeout lifecycle', () => {
 		const fired = createRecorder<readonly []>()
 		timeout.signal.addEventListener('abort', fired.handler)
 
-		for (let cycle = 0; cycle < 1_000; cycle += 1) {
+		Array.from({ length: 1_000 }).forEach(() => {
 			timeout.start()
 			timeout.clear()
-		}
+		})
 		await waitForDelay(WAIT_MS)
 
 		expect(timeout.expired).toBe(false)
@@ -131,7 +131,7 @@ describe('Timeout lifecycle', () => {
 		const fired = createRecorder<readonly []>()
 		timeout.signal.addEventListener('abort', fired.handler)
 
-		for (let cycle = 0; cycle < 500; cycle += 1) timeout.start()
+		Array.from({ length: 500 }).forEach(() => timeout.start())
 		await waitForDelay(WAIT_MS)
 
 		expect(timeout.expired).toBe(true)
@@ -255,20 +255,22 @@ describe('Timeout parent lifecycle', () => {
 		const parent = new AbortController()
 		const timeout = new Timeout({ ms: MS, signal: parent.signal })
 		const expired = timeout.signal
-		let restarted: AbortSignal | undefined
-		expired.addEventListener(
-			'abort',
-			() => {
-				timeout.start()
-				restarted = timeout.signal
-				queueMicrotask(() => parent.abort())
-			},
-			{ once: true },
-		)
+		const restart = new Promise<AbortSignal>((resolve) => {
+			expired.addEventListener(
+				'abort',
+				() => {
+					timeout.start()
+					resolve(timeout.signal)
+					queueMicrotask(() => parent.abort())
+				},
+				{ once: true },
+			)
+		})
 
 		timeout.start()
 		await waitForDelay(WAIT_MS)
 
+		const restarted = await Promise.race([restart, Promise.resolve(undefined)])
 		if (restarted === undefined) throw new Error('Expected the expiry listener to restart')
 		expect(parent.signal.aborted).toBe(true)
 		expect(restarted).not.toBe(expired)
@@ -298,10 +300,10 @@ describe('Timeout parent lifecycle', () => {
 		const parent = new AbortController()
 		const timeout = new Timeout({ ms: MS, signal: parent.signal })
 
-		for (let cycle = 0; cycle < 1_000; cycle += 1) {
+		Array.from({ length: 1_000 }).forEach(() => {
 			timeout.start()
 			timeout.clear()
-		}
+		})
 		parent.abort()
 		timeout.start()
 		await waitForDelay(WAIT_MS)
