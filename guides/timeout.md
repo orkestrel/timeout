@@ -45,13 +45,13 @@ defaults to a random UUID.
 
 ### Factories
 
-| API             | Kind     | Summary                                                                                           |
+| Name            | Kind     | Summary                                                                                           |
 | --------------- | -------- | ------------------------------------------------------------------------------------------------- |
 | `createTimeout` | function | Creates a deadline handle from validated `TimeoutOptions` and returns it as a `TimeoutInterface`. |
 
 ### Classes
 
-| API       | Kind  | Summary                                                                                                                                                       |
+| Name      | Kind  | Summary                                                                                                                                                       |
 | --------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Timeout` | class | Implements `TimeoutInterface` exactly, as a controllable `setTimeout` wrapper over one owned `AbortController` whose signal aborts when the deadline expires. |
 
@@ -59,7 +59,7 @@ defaults to a random UUID.
 
 A `Shape` cell holds the constant's declared type.
 
-| API              | Kind  | Shape    | Summary                                                                               |
+| Name             | Kind  | Shape    | Summary                                                                               |
 | ---------------- | ----- | -------- | ------------------------------------------------------------------------------------- |
 | `MAX_TIMEOUT_MS` | const | `number` | Names the largest timeout duration the package accepts, `2_147_483_647` milliseconds. |
 
@@ -67,14 +67,14 @@ A `Shape` cell holds the constant's declared type.
 
 In a guard table a `Shape` cell holds the type the guard narrows to.
 
-| API                 | Kind     | Shape         | Summary                                                                                                                                |
+| Name                | Kind     | Shape         | Summary                                                                                                                                |
 | ------------------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `isTimeoutDuration` | function | `number`      | Determines whether a value is an integer in the inclusive range from `0` through `MAX_TIMEOUT_MS`, staying total for every input.      |
 | `isTimeoutSignal`   | function | `AbortSignal` | Determines whether a value is a genuine native `AbortSignal`, staying total for a structural spoof and for a hostile or revoked proxy. |
 
 ### Helpers
 
-| API                      | Kind     | Summary                                                                                                             |
+| Name                     | Kind     | Summary                                                                                                             |
 | ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------- |
 | `validateTimeoutOptions` | function | Validates once-read timeout construction options and returns a fresh normalized copy omitting absent optional keys. |
 
@@ -82,7 +82,7 @@ In a guard table a `Shape` cell holds the type the guard narrows to.
 
 A `Shape` cell holds an interface's data members as bare names in braces, `?` marking an optional member and `plus` introducing its call-signature members, and a type alias's own type literal with a union's arms escaped as `\|`.
 
-| Type               | Kind      | Shape                                           | Summary                                                                                   |
+| Name               | Kind      | Shape                                           | Summary                                                                                   |
 | ------------------ | --------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `TimeoutOptions`   | interface | `{ id?, ms, signal? }`                          | Represents the options `createTimeout` and the `Timeout` constructor accept.              |
 | `TimeoutInterface` | interface | `{ id, ms, signal, expired } plus start, clear` | Represents a controllable deadline exposing a native `AbortSignal` that aborts on expiry. |
