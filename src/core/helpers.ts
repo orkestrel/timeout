@@ -1,5 +1,12 @@
 import type { TimeoutOptions } from './types.js'
-import { ContractError, isRecord, isString, preview, readValue } from '@orkestrel/contract'
+import {
+	isRecord,
+	isString,
+	optionalOf,
+	preview,
+	readValue,
+	refuseValue,
+} from '@orkestrel/contract'
 import { MAX_TIMEOUT_MS } from './constants.js'
 import { isTimeoutDuration, isTimeoutSignal } from './validators.js'
 
@@ -22,16 +29,7 @@ import { isTimeoutDuration, isTimeoutSignal } from './validators.js'
  * ```
  */
 export function validateTimeoutOptions(options: TimeoutOptions): TimeoutOptions {
-	if (!isRecord(options)) {
-		throw new ContractError('Timeout: options must be a plain record', {
-			code: 'bound',
-			context: {
-				path: ['options'],
-				limit: 'plain record',
-				received: preview(options),
-			},
-		})
-	}
+	refuseValue(options, isRecord, 'Timeout', { path: ['options'], limit: 'plain record' })
 
 	const { id, ms, signal } = readValue(
 		() => ({
@@ -51,36 +49,21 @@ export function validateTimeoutOptions(options: TimeoutOptions): TimeoutOptions 
 		},
 	)
 
-	if (id !== undefined && !isString(id)) {
-		throw new ContractError('Timeout: id must be a string when defined', {
-			code: 'literal',
-			context: {
-				path: ['options', 'id'],
-				limit: 'string or undefined',
-				received: preview(id),
-			},
-		})
-	}
-	if (!isTimeoutDuration(ms)) {
-		throw new ContractError('Timeout: ms must be an integer in the supported range', {
-			code: 'range',
-			context: {
-				path: ['options', 'ms'],
-				limit: `integer in [0, ${MAX_TIMEOUT_MS}]`,
-				received: preview(ms),
-			},
-		})
-	}
-	if (signal !== undefined && !isTimeoutSignal(signal)) {
-		throw new ContractError('Timeout: signal must be a native AbortSignal when defined', {
-			code: 'placement',
-			context: {
-				path: ['options', 'signal'],
-				limit: 'native AbortSignal or undefined',
-				received: preview(signal),
-			},
-		})
-	}
+	refuseValue(id, optionalOf(isString), 'Timeout', {
+		path: ['options', 'id'],
+		limit: 'string or undefined',
+		code: 'literal',
+	})
+	refuseValue(ms, isTimeoutDuration, 'Timeout', {
+		path: ['options', 'ms'],
+		limit: `integer in [0, ${MAX_TIMEOUT_MS}]`,
+		code: 'range',
+	})
+	refuseValue(signal, optionalOf(isTimeoutSignal), 'Timeout', {
+		path: ['options', 'signal'],
+		limit: 'native AbortSignal or undefined',
+		code: 'placement',
+	})
 
 	if (id !== undefined && signal !== undefined) return { id, ms, signal }
 	if (id !== undefined) return { id, ms }

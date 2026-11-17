@@ -57,8 +57,24 @@ describe('validateTimeoutOptions', () => {
 	})
 
 	it.each([
-		['options', null, 'bound', ['options'], 'plain record', preview(null)],
-		['id', { id: 7, ms: 10 }, 'literal', ['options', 'id'], 'string or undefined', '7'],
+		[
+			'options',
+			null,
+			'bound',
+			['options'],
+			'plain record',
+			preview(null),
+			'Timeout: options must be plain record',
+		],
+		[
+			'id',
+			{ id: 7, ms: 10 },
+			'literal',
+			['options', 'id'],
+			'string or undefined',
+			'7',
+			'Timeout: options.id must be string or undefined',
+		],
 		[
 			'ms',
 			{ ms: Number.NaN },
@@ -66,6 +82,7 @@ describe('validateTimeoutOptions', () => {
 			['options', 'ms'],
 			`integer in [0, ${MAX_TIMEOUT_MS}]`,
 			'NaN',
+			`Timeout: options.ms must be integer in [0, ${MAX_TIMEOUT_MS}]`,
 		],
 		[
 			'signal',
@@ -74,14 +91,16 @@ describe('validateTimeoutOptions', () => {
 			['options', 'signal'],
 			'native AbortSignal or undefined',
 			'object',
+			'Timeout: options.signal must be native AbortSignal or undefined',
 		],
 	])(
 		'rejects invalid %s with exact contract context',
-		(_field, input, code, path, limit, received) => {
+		(_field, input, code, path, limit, received, message) => {
 			const error = captureError(() => Reflect.apply(validateTimeoutOptions, undefined, [input]))
 
 			expect(isContractError(error)).toBe(true)
 			if (!isContractError(error)) throw new Error('Expected a ContractError')
+			expect(error.message).toBe(message)
 			expect(error.code).toBe(code)
 			expect(error.context).toEqual({ path, limit, received })
 		},
